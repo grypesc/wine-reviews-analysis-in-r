@@ -1,8 +1,3 @@
-# Title     : TODO
-# Objective : TODO
-# Created by: greg
-# Created on: 22.10.2020
-
 library(text2vec)
 library(data.table)
 library(readr)
@@ -12,9 +7,13 @@ wine <- subset(wine, select = c(X1, points, price, description))
 wine$is_positive <- ifelse(wine$points>90, 1, 0)
 setDT(wine)
 setkey(wine, X1)
-set.seed(99)
-all_ids = wine$X1
 
+# Check missing values in a column
+# print(sum(is.na(wine$description)))
+
+
+set.seed(99)
+all_ids <- wine$X1
 sample_size <- floor(0.8 * nrow(wine))
 train_ids <- sample(all_ids, sample_size)
 test_ids <- setdiff(all_ids, train_ids)
@@ -40,7 +39,6 @@ dtm_train = create_dtm(it_train, vectorizer)
 print(difftime(Sys.time(), t1, units = 'sec'))
 
 library(glmnet)
-NFOLDS = 4
 t1 = Sys.time()
 glmnet_classifier = cv.glmnet(x = dtm_train, y = train[['is_positive']],
                               family = 'binomial',
@@ -49,7 +47,7 @@ glmnet_classifier = cv.glmnet(x = dtm_train, y = train[['is_positive']],
                               # interested in the area under ROC curve
                               type.measure = "auc",
                               # 5-fold cross-validation
-                              nfolds = NFOLDS,
+                              nfolds = 5,
                               # high value is less accurate, but has faster training
                               thresh = 1e-3,
                               # again lower number of iterations for faster training
