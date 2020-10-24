@@ -125,3 +125,9 @@ fabric.properties
 
 # Python's virtual environment
 venv/
+
+# Data
+data/
+
+# Jupyter
+.ipynb_checkpoints/
