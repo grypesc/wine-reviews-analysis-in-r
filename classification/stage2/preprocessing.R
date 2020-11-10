@@ -2,16 +2,16 @@
 # Objective : TODO
 # Created by: mati
 # Created on: 08.11.2020
+# Glove pretrained model: http://nlp.stanford.edu/data/glove.6B.zip
 
-#install.packages('SnowballC')
-#install.packages('tidytext')
-#install.packages('dplyr')
-#library(SnowballC)
-#library(tidytext)
-#library(dplyr)
+library(SnowballC)
+library(tidytext)
+library(dplyr)
+library(text2vec)
+library(data.table)
 
 load_train <- function () {
-  read.csv('../../data/winemag-data-130k-v2.csv', header = TRUE)
+  read.csv('classification/data/winemag-data-130k-v2.csv', header = TRUE)
 }
 
 remove_outliers <- function(df, col) {
@@ -40,28 +40,45 @@ clean_text <- function (df, col) {
   df
 }
 
-# TODO
-remove_stopwords <- function (df, col) {
-  data('stop_words')
-  mutate_at(df, de = as.character(text)) %>%
-    select(text) %>%
-    unnest_tokens("word", text)
-  text <- df[[col]]
-  stopwords_regex <- paste(stop_words['word'], collapse = '\\b|\\b')
-  stopwords_regex <- paste0('\\b', stopwords_regex, '\\b')
-  text <- text %>% filter(!word %in% stop_words$word)
-  df[[col]] <- text
-  df
+discretize_review <- function (df) {
+  df$sentiment <- df$points > 90
+  return(df)
 }
 
-cleaned_train <- function () {
-  df <- load_train()
-  df <- remove_outliers(df, 'price')
-  clean_text(df, 'description')
+load_glove <- function () {
+  if (!file.exists('classification/data/glove.6B.50d.txt')) {
+    download.file('http://nlp.stanford.edu/data/glove.6B.zip',destfile = 'classification/data/glove.6B.zip')
+    unzip('classification/data/glove.6B.zip')
+  }
+  glove <- fread('classification/data/glove.6B.50d.txt', data.table = F,  encoding = 'UTF-8')
+  names(glove) <- c('word', paste('dim', 1:50, sep = '_'))
+  return(glove)
 }
 
-df <- load_train()
-df <- clean_text(df, 'description')
-df <- remove_stopwords(df, 'description')
-head(df)
+embed_doc <- function (entry, glove) {
+  # split strings into vector
+  v <- unlist(strsplit(entry[3], ' '))
+  # only words with 2+ characters
+  v <- unique(v[grepl('..+', v)])
+  # find glove repr
+  embed <- lapply(v, FUN = function (x) as.vector(glove[glove$word == x, -1]))
+  # create matrix of word vectors (1 row is 1 word)
+  m <- matrix(unlist(embed), nrow=length(embed), byrow=TRUE)
+  # calculate mean of each dim
+  colSums(m) / length(v)
+}
+
+embed_description <- function (df, glove) {
+  df$embeded <- apply(df,1, function (x) embed_doc(x, glove))
+  return(df)
+}
+
+
+# example
+#df <- load_train()
+#glove <- load_glove()
+#df <- clean_text(df, 'description')
+#df <- discretize_review(df)
+#df <- embed_description(df[1:20,], glove)
+#head(df)
 
