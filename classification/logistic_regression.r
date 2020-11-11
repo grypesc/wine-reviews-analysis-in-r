@@ -10,17 +10,17 @@ test_X <- sets_list[[3]]
 test_y <- sets_list[[4]]
 
 t1 <- Sys.time()
-glmnet_classifier = cv.glmnet(x = train_X, y = train_y,
-                              family = 'binomial',
-                              # L1 penalty
+glmnet_classifier <- cv.glmnet(x = train_X, y = train_y,
+                               family = 'binomial',
+                               # L1 penalty
                               alpha = 1,
-                              # interested in the area under ROC curve
+                               # interested in the area under ROC curve
                               type.measure = "auc",
-                              # 5-fold cross-validation
+                               # 5-fold cross-validation
                               nfolds = 5,
-                              # high value is less accurate, but has faster training
+                               # high value is less accurate, but has faster training
                               thresh = 1e-2,
-                              # again lower number of iterations for faster training
+                               # again lower number of iterations for faster training
                               maxit = 1e2)
 print(difftime(Sys.time(), t1, units = 'sec'))
 plot(glmnet_classifier)

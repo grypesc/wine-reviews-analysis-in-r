@@ -7,6 +7,7 @@
 library(text2vec)
 library(data.table)
 library(readr)
+library(Matrix)
 
 load_tfidf <- function () {
   if (file.exists("data/train_tfidf.mm") && file.exists("data/test_tfidf.mm")) {
