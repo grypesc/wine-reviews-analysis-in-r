@@ -1,5 +1,5 @@
 # Title     : loader_tfidf
-# Objective : Load data, turn it into tfidf and return train and test sets
+# Objective : Preprocess data and return train and test sets
 # Created by: greg
 # Created on: 10.11.2020
 # TODO Paths, oversampling
@@ -8,7 +8,15 @@ library(text2vec)
 library(data.table)
 library(readr)
 
-loader_tfidf <- function(split=0.8) {
+load_tfidf <- function () {
+  if (file.exists("data/train_tfidf.mm") && file.exists("data/test_tfidf.mm")) {
+    return (load_tfidf_from_file())
+  }
+  return (load_tfidf_raw(split = 0.8, save = TRUE))
+}
+
+load_tfidf_raw <- function(split=0.8, save=False) {
+  # Load raw data, turn it into tfidf and return train and test sets
   # Returns train_X, train_y, test_X, test_y in a list
   # split - fraction of whole dataset that will be used as training set, the rest is test set
 
@@ -59,7 +67,27 @@ loader_tfidf <- function(split=0.8) {
                     progressbar = FALSE)
   dtm_test_tfidf <- create_dtm(it_test, vectorizer)
   dtm_test_tfidf <- transform(dtm_test_tfidf, tfidf)
-  # Got to return multiple objects in a list because R is bad
+
+  if (save) {
+    train_full <- cbind(dtm_train_tfidf, train$sentiment)
+    test_full <- cbind(dtm_test_tfidf, test$sentiment)
+    writeMM(train_full, 'data/train_tfidf.mm')
+    writeMM(test_full, 'data/test_tfidf.mm')
+  }
+
   return (list(dtm_train_tfidf, train$sentiment,
           dtm_test_tfidf, test$sentiment))
+}
+
+load_tfidf_from_file <- function() {
+  train_full <- readMM('data/train_tfidf.mm')
+  train_X <- train_full[, 1:ncol(train_full)-1]
+  train_y <- train_full[, ncol(train_full)]
+
+  test_full <- readMM('data/test_tfidf.mm')
+  test_X <- test_full[, 1:ncol(test_full)-1]
+  test_y <- test_full[, ncol(test_full)]
+
+  return (list(train_X, train_y,
+          test_X, test_y))
 }

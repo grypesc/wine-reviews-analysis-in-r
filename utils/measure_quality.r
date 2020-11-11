@@ -7,7 +7,7 @@ library(caret)
 library(pROC)
 
 measure_quality <- function(y_predictions, y_true, threshold=0.5) {
-  # Generate ROC with AUC, print metrics to console
+  # Generate ROC with AUC on plot, print metrics to console
   # threshold - threshold above which qualify to class "1"
 
   preds_factor <- factor(ifelse(y_predictions >= threshold, 1, 0))

@@ -3,7 +3,7 @@ library(glmnet)
 source("utils/loader_tfidf.r")
 source("utils/measure_quality.r")
 
-sets_list <- loader_tfidf(split=0.8)
+sets_list <- load_tfidf()
 train_X <- sets_list[[1]]
 train_y <- sets_list[[2]]
 test_X <- sets_list[[3]]
