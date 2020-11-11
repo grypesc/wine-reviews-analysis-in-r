@@ -14,7 +14,7 @@ load_wines <- function () {
   wine$sentiment <- ifelse(wine$points>90, 1, 0)
   setDT(wine)
   setkey(wine, X1)
-  return(wine[1:200,])
+  return(wine[nchar(wine$description) > 0, ])
 }
 
 load_glove <- function (dims) {
@@ -52,16 +52,17 @@ clean_description <- function (df) {
 }
 
 embed_doc <- function (doc, glove) {
-  # split strings into vector
-  v <- unlist(strsplit(doc, ' '))
-  # only words with 2+ characters
-  v <- unique(v[grepl('..+', v)])
   # find glove repr
-  embed <- lapply(v, FUN = function (x) as.vector(glove[glove$word == x, -1]))
-  # create matrix of word vectors (1 row is 1 word)
-  m <- matrix(unlist(embed), nrow=length(embed), byrow=TRUE)
-  # calculate mean of each dim
-  colSums(m) / length(v)
+  vec <- unlist(strsplit(doc, ' '))
+  embeded <- sapply(vec, function (x) as.numeric(glove[glove$word == x, -1]))
+  return(rowMeans(embeded, na.rm = TRUE))
+}
+
+embed_description <- function (df, glove, dims) {
+  emb <- clean_description(df)
+  emb <- data.frame(t(sapply(emb$description, function (x) embed_doc(x, glove))))
+  names(emb) <- paste('dim', 1:dims, sep = '_')
+  return(data.frame(df, emb))
 }
 
 loader_glove <- function (dims) {
@@ -77,15 +78,14 @@ loader_glove <- function (dims) {
   train <- wine[J(train_ids)]
   test <- wine[J(test_ids)]
 
-  dtm_train_glove <- clean_description(train)
-  dtm_train_glove$description <- sapply(dtm_train_glove$description, function (x) embed_doc(x, glove))
+  dtm_train_glove <- embed_description(train, glove, dims)
+  dtm_test_glove <- embed_description(test, glove, dims)
 
-  dtm_test_glove <- clean_description(test)
-  dtm_test_glove$description <- sapply(dtm_train_glove$description, function (x) embed_doc(x, glove))
-
-  write.csv(dtm_train_glove, 'data/dtm_train_glove.csv')
-  write.csv(dtm_test_glove, 'data/dtm_test_glove.csv')
+  write_csv(dtm_train_glove, 'data/dtm_train_glove.csv')
+  write_csv(dtm_test_glove, 'data/dtm_test_glove.csv')
 
   return (list(dtm_train_glove, train$sentiment,
           dtm_test_glove, test$sentiment))
 }
+
+loader_glove(50)
