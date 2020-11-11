@@ -19,7 +19,7 @@ load_tfidf_raw <- function(split=0.8, save=False) {
   # Load raw data, turn it into tfidf and return train and test sets
   # Returns train_X, train_y, test_X, test_y in a list
   # split - fraction of whole dataset that will be used as training set, the rest is test set
-
+  # save - if write train and test matrices to files
   wine <- read_csv('data/winemag-data_first150k.csv')
   wine <- subset(wine, select = c(X1, points, price, description))
   wine$sentiment <- ifelse(wine$points>90, 1, 0)
@@ -69,6 +69,7 @@ load_tfidf_raw <- function(split=0.8, save=False) {
   dtm_test_tfidf <- transform(dtm_test_tfidf, tfidf)
 
   if (save) {
+    # writing as sparse matrices
     train_full <- cbind(dtm_train_tfidf, train$sentiment)
     test_full <- cbind(dtm_test_tfidf, test$sentiment)
     writeMM(train_full, 'data/train_tfidf.mm')
