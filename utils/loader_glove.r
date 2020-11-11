@@ -17,7 +17,7 @@ load_wines <- function () {
   return(wine[nchar(wine$description) > 0, ])
 }
 
-load_glove <- function (dims) {
+load_glove_model <- function (dims) {
   # dims - glove dataset dimensions 50/100/200/300
   file <- sprintf('data/glove.6B.%dd.txt', dims)
   if (!file.exists(file)) {
@@ -58,34 +58,59 @@ embed_doc <- function (doc, glove) {
   return(rowMeans(embeded, na.rm = TRUE))
 }
 
-embed_description <- function (df, glove, dims) {
+embed_df <- function (df, glove, dims) {
   emb <- clean_description(df)
   emb <- data.frame(t(sapply(emb$description, function (x) embed_doc(x, glove))))
   names(emb) <- paste('dim', 1:dims, sep = '_')
-  return(data.frame(df, emb))
+  return(data.frame(emb))
 }
 
-loader_glove <- function (dims) {
+load_glove_raw <- function (split=0.8, save=False, dims=50) {
   # dims - glove dataset dimensions 50/100/200/300
   # Returns train_X, train_y, test_X, test_y in a list
   wine <- load_wines()
-  glove <- load_glove(dims)
+  glove <- load_glove_model(dims)
 
   all_ids <- wine$X1
-  sample_size <- floor(0.8 * nrow(wine))
+  sample_size <- floor(split * nrow(wine))
   train_ids <- sample(all_ids, sample_size)
   test_ids <- setdiff(all_ids, train_ids)
   train <- wine[J(train_ids)]
   test <- wine[J(test_ids)]
 
-  dtm_train_glove <- embed_description(train, glove, dims)
-  dtm_test_glove <- embed_description(test, glove, dims)
+  dtm_train_glove <- embed_df(train, glove, dims)
+  dtm_test_glove <- embed_df(test, glove, dims)
 
-  write_csv(dtm_train_glove, 'data/dtm_train_glove.csv')
-  write_csv(dtm_test_glove, 'data/dtm_test_glove.csv')
+  if (save) {
+    # as data frames
+    train_full <- cbind(dtm_train_glove, train$sentiment)
+    test_full <- cbind(dtm_test_glove, test$sentiment)
+    write_csv(train_full, 'data/train_glove.csv')
+    write_csv(test_full, 'data/test_glove.csv')
+  }
 
   return (list(dtm_train_glove, train$sentiment,
           dtm_test_glove, test$sentiment))
 }
 
-loader_glove(50)
+load_glove_from_file <- function() {
+  train_full <- read_csv('data/train_glove.csv')
+  train_X <- train_full[, 1:ncol(train_full)-1]
+  train_y <- train_full[, ncol(train_full)]
+
+  test_full <- read_csv('data/test_glove.csv')
+  test_X <- test_full[, 1:ncol(test_full)-1]
+  test_y <- test_full[, ncol(test_full)]
+
+  return (list(train_X, train_y,
+          test_X, test_y))
+}
+
+load_glove <- function () {
+  if (file.exists("data/train_glove.csv") && file.exists("data/test_glove.csv")) {
+    return (load_glove_from_file())
+  }
+  return (load_glove_raw(split = 0.8, save = TRUE, dims = 50))
+}
+
+load_glove()
