@@ -1,5 +1,3 @@
-# Title     : TODO
-# Objective : TODO
 # Created by: mati
 # Created on: 08.11.2020
 # Glove pretrained model: http://nlp.stanford.edu/data/glove.6B.zip
@@ -7,6 +5,7 @@
 library(dplyr)
 library(data.table)
 library(readr)
+library(Matrix)
 
 load_wines <- function () {
   wine <- read_csv('data/winemag-data_first150k.csv')
@@ -14,7 +13,7 @@ load_wines <- function () {
   wine$sentiment <- ifelse(wine$points>90, 1, 0)
   setDT(wine)
   setkey(wine, X1)
-  return(wine[nchar(wine$description) > 0, ])
+  return(wine[nchar(wine$description) > 0, ][1:10, ])
 }
 
 load_glove_model <- function (dims) {
@@ -89,8 +88,7 @@ load_glove_raw <- function (split=0.8, save=False, dims=50) {
     write_csv(test_full, 'data/test_glove.csv')
   }
 
-  return (list(dtm_train_glove, train$sentiment,
-          dtm_test_glove, test$sentiment))
+  return (list(as.matrix(dtm_train_glove), as.matrix(train$sentiment), as.matrix(dtm_test_glove), as.matrix(test$sentiment)))
 }
 
 load_glove_from_file <- function() {
@@ -102,12 +100,11 @@ load_glove_from_file <- function() {
   test_X <- test_full[, 1:ncol(test_full)-1]
   test_y <- test_full[, ncol(test_full)]
 
-  return (list(train_X, train_y,
-          test_X, test_y))
+  return (list(as.matrix(train_X), as.matrix(train_y), as.matrix(test_X), as.matrix(test_y)))
 }
 
 load_glove <- function () {
-  if (file.exists("data/train_glove.csv") && file.exists("data/test_glove.csv")) {
+  if (file.exists("data/train_glove.mm") && file.exists("data/test_glove.mm")) {
     return (load_glove_from_file())
   }
   return (load_glove_raw(split = 0.8, save = TRUE, dims = 50))
