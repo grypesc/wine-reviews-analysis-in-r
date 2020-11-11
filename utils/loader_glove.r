@@ -4,22 +4,33 @@
 # Created on: 08.11.2020
 # Glove pretrained model: http://nlp.stanford.edu/data/glove.6B.zip
 
-library(SnowballC)
-library(tidytext)
 library(dplyr)
-library(text2vec)
 library(data.table)
+library(readr)
 
-load_train <- function () {
-  read.csv('classification/data/winemag-data-130k-v2.csv', header = TRUE)
+load_wines <- function () {
+  wine <- read_csv('data/winemag-data_first150k.csv')
+  wine <- subset(wine, select = c(X1, points, price, description))
+  wine$sentiment <- ifelse(wine$points>90, 1, 0)
+  setDT(wine)
+  setkey(wine, X1)
+  return(wine[1:200,])
 }
 
-remove_outliers <- function(df, col) {
-  df[!df[[col]] %in% boxplot.stats(df[[col]])$out, ]
+load_glove <- function (dims) {
+  # dims - glove dataset dimensions 50/100/200/300
+  file <- sprintf('data/glove.6B.%dd.txt', dims)
+  if (!file.exists(file)) {
+    download.file('http://nlp.stanford.edu/data/glove.6B.zip',destfile = 'data/glove.6B.zip')
+    unzip('classification/data/glove.6B.zip')
+  }
+  glove <- fread(file, data.table=F, encoding='UTF-8')
+  names(glove) <- c('word', paste('dim', 1:dims, sep = '_'))
+  return(glove)
 }
 
-clean_text <- function (df, col) {
-  text <- df[[col]]
+clean_description <- function (df) {
+  text <- df$description
   text <- tolower(text)
   # mentions
   text <- gsub('@\\w+', '', text)
@@ -36,28 +47,13 @@ clean_text <- function (df, col) {
   text <- gsub('^\\s+', '', text)
   text <- gsub('\\s+$', '', text)
   text <- gsub('[ |\t]+', ' ', text)
-  df[[col]] <- text
+  df$description <- text
   df
 }
 
-discretize_review <- function (df) {
-  df$sentiment <- df$points > 90
-  return(df)
-}
-
-load_glove <- function () {
-  if (!file.exists('classification/data/glove.6B.50d.txt')) {
-    download.file('http://nlp.stanford.edu/data/glove.6B.zip',destfile = 'classification/data/glove.6B.zip')
-    unzip('classification/data/glove.6B.zip')
-  }
-  glove <- fread('classification/data/glove.6B.50d.txt', data.table = F,  encoding = 'UTF-8')
-  names(glove) <- c('word', paste('dim', 1:50, sep = '_'))
-  return(glove)
-}
-
-embed_doc <- function (entry, glove) {
+embed_doc <- function (doc, glove) {
   # split strings into vector
-  v <- unlist(strsplit(entry[3], ' '))
+  v <- unlist(strsplit(doc, ' '))
   # only words with 2+ characters
   v <- unique(v[grepl('..+', v)])
   # find glove repr
@@ -68,17 +64,28 @@ embed_doc <- function (entry, glove) {
   colSums(m) / length(v)
 }
 
-embed_description <- function (df, glove) {
-  df$embeded <- apply(df,1, function (x) embed_doc(x, glove))
-  return(df)
+loader_glove <- function (dims) {
+  # dims - glove dataset dimensions 50/100/200/300
+  # Returns train_X, train_y, test_X, test_y in a list
+  wine <- load_wines()
+  glove <- load_glove(dims)
+
+  all_ids <- wine$X1
+  sample_size <- floor(0.8 * nrow(wine))
+  train_ids <- sample(all_ids, sample_size)
+  test_ids <- setdiff(all_ids, train_ids)
+  train <- wine[J(train_ids)]
+  test <- wine[J(test_ids)]
+
+  dtm_train_glove <- clean_description(train)
+  dtm_train_glove$description <- sapply(dtm_train_glove$description, function (x) embed_doc(x, glove))
+
+  dtm_test_glove <- clean_description(test)
+  dtm_test_glove$description <- sapply(dtm_train_glove$description, function (x) embed_doc(x, glove))
+
+  write.csv(dtm_train_glove, 'data/dtm_train_glove.csv')
+  write.csv(dtm_test_glove, 'data/dtm_test_glove.csv')
+
+  return (list(dtm_train_glove, train$sentiment,
+          dtm_test_glove, test$sentiment))
 }
-
-
-# example
-#df <- load_train()
-#glove <- load_glove()
-#df <- clean_text(df, 'description')
-#df <- discretize_review(df)
-#df <- embed_description(df[1:20,], glove)
-#head(df)
-
