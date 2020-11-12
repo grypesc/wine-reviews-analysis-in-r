@@ -95,7 +95,7 @@ load_glove_raw <- function (split=0.8, save=False, dims=50) {
   test_oversampled <- oversample(dtm_test_glove, test$sentiment)
   test_X <- test_oversampled[[1]]
   test_y <- test_oversampled[[2]]
-  return (list(as.matrix(train_X), as.matrix(train_y), as.matrix(test_X), as.matrix(test_y)))
+  return (list(as.matrix(train_X), as.vector(train_y), as.matrix(test_X), as.vector(test_y)))
 }
 
 load_glove_from_file <- function() {
@@ -113,7 +113,7 @@ load_glove_from_file <- function() {
   test_X <- test_oversampled[[1]]
   test_y <- test_oversampled[[2]]
 
-  return (list(as.matrix(train_X), as.matrix(train_y), as.matrix(test_X), as.matrix(test_y)))
+  return (list(as.matrix(train_X), as.vector(train_y), as.matrix(test_X), as.vector(test_y)))
 }
 
 oversample <- function (X, y) {
