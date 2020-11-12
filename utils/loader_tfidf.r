@@ -16,7 +16,7 @@ load_tfidf <- function () {
   return (load_tfidf_raw(split = 0.8, save = TRUE))
 }
 
-load_tfidf_raw <- function(split=0.8, save=False) {
+load_tfidf_raw <- function(split=0.8, save=FALSE) {
   # Load raw data, turn it into tfidf and return train and test sets
   # Returns train_X, train_y, test_X, test_y in a list
   # split - fraction of whole dataset that will be used as training set, the rest is test set
