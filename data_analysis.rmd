@@ -1,0 +1,48 @@
+---
+title: "Data"
+author: mati
+date: 12.11.2020
+output: html_notebook
+---
+
+```{r message=FALSE}
+library(dplyr)
+library(knitr)
+library(rmarkdown)
+
+df <- read.csv('data/winemag-data-130k-v2.csv', header = TRUE)
+head(df)
+```
+<h2>Price vs Points</h2>
+```{r }
+plot(x=df$price, xlab='price', y=df$points, ylab='points')
+```
+<h2>Price Outliers</h2>
+```{r}
+boxplot(df$price, horizontal=TRUE)
+remove_outliers <- function(df, col) {
+  df[!df[[col]] %in% boxplot.stats(df[[col]])$out, ]
+}
+remove_missing <- function(df) {
+    df[complete.cases(df), ]
+}
+boxplot(remove_outliers(df, 'price')$price, horizontal=TRUE)
+```
+<h2>Price vs Points 2</h2>
+```{r}
+price_qnt = remove_outliers(df, 'price')
+plot(x=price_qnt$price, xlab='price', y=price_qnt$points, ylab='points')
+```
+<h2>Points</h2>
+```{r}
+hist(df$points, breaks=c(0, 25, 50, 75, 100), xlab='points', main='Points distribution')
+plot(ecdf(df$points), main='Cumulative distribution of points')
+hist(
+    df$points,
+    breaks=c(80,90,100),
+    col=c('#74b9ff', '#e17055'),
+    xlab='przyznane punkty',
+    ylab='liczba recenzji',
+    main='Rozkład punktacji'
+)
+```
