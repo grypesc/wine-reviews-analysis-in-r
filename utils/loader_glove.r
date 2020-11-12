@@ -22,7 +22,7 @@ load_glove_model <- function (dims) {
   file <- sprintf('data/glove.6B.%dd.txt', dims)
   if (!file.exists(file)) {
     download.file('http://nlp.stanford.edu/data/glove.6B.zip',destfile = 'data/glove.6B.zip')
-    unzip('classification/data/glove.6B.zip')
+    unzip('data/glove.6B.zip')
   }
   glove <- fread(file, data.table=F, encoding='UTF-8')
   names(glove) <- c('word', paste('dim', 1:dims, sep = '_'))
@@ -66,7 +66,7 @@ embed_df <- function (df, glove, dims) {
   return(data.frame(emb))
 }
 
-load_glove_raw <- function (split=0.8, save=False, dims=50) {
+load_glove_raw <- function (split=0.8, save=FALSE, dims=50) {
   # dims - glove dataset dimensions 50/100/200/300
   # Returns train_X, train_y, test_X, test_y in a list
   wine <- load_wines()
