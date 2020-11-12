@@ -7,6 +7,7 @@ library(data.table)
 library(readr)
 library(Matrix)
 library(pbapply)
+library(hash)
 
 load_wines <- function () {
   wine <- read_csv('data/winemag-data_first150k.csv')
@@ -25,8 +26,16 @@ load_glove_model <- function (dims) {
     unzip('data/glove.6B.zip')
   }
   glove <- fread(file, data.table=F, encoding='UTF-8')
+  dict <- hash::hash()
   names(glove) <- c('word', paste('dim', 1:dims, sep = '_'))
-  return(glove)
+  print("creating glove dict")
+  for (row in 1:nrow(glove)) {
+    word <- glove[row, 'word']
+    vec <- glove[row, -1]
+    dict[[word]] <- vec
+  }
+  print("glove dict created")
+  return(dict)
 }
 
 clean_description <- function (df) {
@@ -51,17 +60,23 @@ clean_description <- function (df) {
   df
 }
 
-embed_doc <- function (doc, glove) {
+embed_doc <- function (doc, glove, dims) {
   # find glove repr
   vec <- unlist(strsplit(doc, ' '))
-  embeded <- sapply(vec, function (x) as.numeric(glove[glove$word == x, -1]))
+  embeded <- sapply(vec, function (x) {
+      if (has.key(x, glove))
+        as.numeric(glove[[x]])
+      else
+        as.numeric(rep(NA, dims))
+  })
   return(rowMeans(embeded, na.rm = TRUE))
 }
 
 embed_df <- function (df, glove, dims) {
+  print("cleaning documents")
   emb <- clean_description(df)
   print("embedding documents")
-  emb <- data.frame(t(pbsapply(emb$description, function (x) embed_doc(x, glove))))
+  emb <- data.frame(t(pbsapply(emb$description, function (x) embed_doc(x, glove, dims))))
   names(emb) <- paste('dim', 1:dims, sep = '_')
   return(data.frame(emb))
 }
