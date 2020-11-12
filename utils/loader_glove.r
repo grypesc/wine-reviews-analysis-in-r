@@ -6,6 +6,7 @@ library(dplyr)
 library(data.table)
 library(readr)
 library(Matrix)
+library(pbapply)
 
 load_wines <- function () {
   wine <- read_csv('data/winemag-data_first150k.csv')
@@ -13,7 +14,7 @@ load_wines <- function () {
   wine$sentiment <- ifelse(wine$points>90, 1, 0)
   setDT(wine)
   setkey(wine, X1)
-  return(wine[nchar(wine$description) > 0, ][1:10, ])
+  return(wine[nchar(wine$description) > 0, ])
 }
 
 load_glove_model <- function (dims) {
@@ -59,7 +60,8 @@ embed_doc <- function (doc, glove) {
 
 embed_df <- function (df, glove, dims) {
   emb <- clean_description(df)
-  emb <- data.frame(t(sapply(emb$description, function (x) embed_doc(x, glove))))
+  print("embedding documents")
+  emb <- data.frame(t(pbsapply(emb$description, function (x) embed_doc(x, glove))))
   names(emb) <- paste('dim', 1:dims, sep = '_')
   return(data.frame(emb))
 }
@@ -87,27 +89,57 @@ load_glove_raw <- function (split=0.8, save=False, dims=50) {
     write_csv(train_full, 'data/train_glove.csv')
     write_csv(test_full, 'data/test_glove.csv')
   }
-
-  return (list(as.matrix(dtm_train_glove), as.matrix(train$sentiment), as.matrix(dtm_test_glove), as.matrix(test$sentiment)))
+  train_oversampled <- oversample(dtm_train_glove, train$sentiment)
+  train_X <- train_oversampled[[1]]
+  train_y <- train_oversampled[[2]]
+  test_oversampled <- oversample(dtm_test_glove, test$sentiment)
+  test_X <- test_oversampled[[1]]
+  test_y <- test_oversampled[[2]]
+  return (list(as.matrix(train_X), as.matrix(train_y), as.matrix(test_X), as.matrix(test_y)))
 }
 
 load_glove_from_file <- function() {
   train_full <- read_csv('data/train_glove.csv')
   train_X <- train_full[, 1:ncol(train_full)-1]
   train_y <- train_full[, ncol(train_full)]
+  train_oversampled <- oversample(train_X, train_y)
+  train_X <- train_oversampled[[1]]
+  train_y <- train_oversampled[[2]]
 
   test_full <- read_csv('data/test_glove.csv')
   test_X <- test_full[, 1:ncol(test_full)-1]
   test_y <- test_full[, ncol(test_full)]
+  test_oversampled <- oversample(test_X, test_y)
+  test_X <- test_oversampled[[1]]
+  test_y <- test_oversampled[[2]]
 
   return (list(as.matrix(train_X), as.matrix(train_y), as.matrix(test_X), as.matrix(test_y)))
 }
 
+oversample <- function (X, y) {
+  full <- cbind(X, y)
+  c0 <- sum(full[ncol(full)] == 0)
+  c1 <- sum(full[ncol(full)] == 1)
+  if (c0 == 0 || c1 == 0) {
+    print("there are no enough samples to reproduce")
+    return(list(X, y))
+  }
+  if (c0 > c1) {
+    samples <- c0 - c1
+    minority <- full[full[ncol(full)] == 1, ]
+    sampled <- minority[sample(1:nrow(minority), samples, replace = TRUE), ]
+  } else {
+    samples <- c1 - c0
+    minority <- full[full[ncol(full)] == 0, ]
+    sampled <- minority[sample(1:nrow(minority), samples, replace = TRUE), ]
+  }
+  result <- rbind(full, sampled)
+  return(list(result[, 1:ncol(result)-1], result[,ncol(result)]))
+}
+
 load_glove <- function () {
-  if (file.exists("data/train_glove.mm") && file.exists("data/test_glove.mm")) {
+  if (file.exists("data/train_glove.csv") && file.exists("data/test_glove.csv")) {
     return (load_glove_from_file())
   }
   return (load_glove_raw(split = 0.8, save = TRUE, dims = 50))
 }
-
-load_glove()
