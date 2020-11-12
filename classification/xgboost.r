@@ -13,8 +13,15 @@ train_y <- sets_list[[2]]
 test_X <- sets_list[[3]]
 test_y <- sets_list[[4]]
 
-bst <- xgboost(data = as.matrix(train_X), label = train_y, max.depth = 4,
-               eta = 1, nthread = 2, nrounds = 10,objective = "binary:logistic")
+c1 <- sum(train_y)
+c0 <- length(train_y) - c1
+
+bst <- xgboost(data = as.matrix(train_X), label = train_y, max.depth = 10,
+               eta = 1, nrounds = 100, objective = "binary:logistic",
+              subsample=0.2, scale_pos_weight=as.double(c1)/c0,
+              colsample_bytree=0.5)
+
+
 
 preds <- predict(bst, as.matrix(test_X))
 measure_quality(preds, test_y)
