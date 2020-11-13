@@ -5,8 +5,8 @@ source("utils/loader_glove.r")
 source("utils/measure_quality.r")
 
 sets_list <- load_glove(oversampling = FALSE)
-train_X <- as.matrix(sets_list[[1]][1:15000,])
-train_y <- as.vector(sets_list[[2]][1:15000])
+train_X <- as.matrix(sets_list[[1]])
+train_y <- as.vector(sets_list[[2]])
 test_X <- as.matrix(sets_list[[3]])
 test_y <- as.vector(sets_list[[4]])
 
