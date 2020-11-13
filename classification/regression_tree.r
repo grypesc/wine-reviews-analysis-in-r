@@ -4,7 +4,7 @@ source("utils/loader_tfidf.r")
 source("utils/loader_glove.r")
 source("utils/measure_quality.r")
 
-sets_list <- load_glove(oversampling = FALSE)
+sets_list <- load_glove()
 train_X <- as.matrix(sets_list[[1]])
 train_y <- as.vector(sets_list[[2]])
 test_X <- as.matrix(sets_list[[3]])
@@ -29,6 +29,6 @@ pruned <- prune(
 
 preds <- predict(pruned, subset(test, select=-test_y))
 preds <- apply(preds, 1, function (x) {
-  if (x[[1]] > x[[2]]) 0 else 1
+  if (x[[1]] > x[[2]]) 1 - x[[1]] else x[[2]]
 })
 measure_quality(preds, test_y)
