@@ -4,7 +4,7 @@ source("utils/loader_tfidf.r")
 source("utils/loader_glove.r")
 source("utils/measure_quality.r")
 
-sets_list <- load_glove()
+sets_list <- load_glove(oversampling = FALSE)
 train_X <- as.matrix(sets_list[[1]])
 train_y <- as.vector(sets_list[[2]])
 test_X <- as.matrix(sets_list[[3]])

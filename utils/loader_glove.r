@@ -81,7 +81,7 @@ embed_df <- function (df, glove, dims) {
   return(data.frame(emb))
 }
 
-load_glove_raw <- function (split=0.8, save=FALSE, dims=50) {
+load_glove_raw <- function (oversampling, split=0.8, save=FALSE, dims=50) {
   # dims - glove dataset dimensions 50/100/200/300
   # Returns train_X, train_y, test_X, test_y in a list
   wine <- load_wines()
@@ -104,29 +104,41 @@ load_glove_raw <- function (split=0.8, save=FALSE, dims=50) {
     write_csv(train_full, 'data/train_glove.csv')
     write_csv(test_full, 'data/test_glove.csv')
   }
-  train_oversampled <- oversample(dtm_train_glove, train$sentiment)
-  train_X <- train_oversampled[[1]]
-  train_y <- train_oversampled[[2]]
-  test_oversampled <- oversample(dtm_test_glove, test$sentiment)
-  test_X <- test_oversampled[[1]]
-  test_y <- test_oversampled[[2]]
+  train_X <- dtm_train_glove
+  train_y <- unlist(train$sentiment)
+  if (oversampling) {
+    train_oversampled <- oversample(dtm_train_glove, train$sentiment)
+    train_X <- train_oversampled[[1]]
+    train_y <- train_oversampled[[2]]
+  }
+  test_X <- dtm_test_glove
+  test_y <- unlist(test$sentiment)
+  if (oversampling) {
+    test_oversampled <- oversample(dtm_test_glove, test$sentiment)
+    test_X <- test_oversampled[[1]]
+    test_y <- test_oversampled[[2]]
+  }
   return (list(as.matrix(train_X), as.vector(train_y), as.matrix(test_X), as.vector(test_y)))
 }
 
-load_glove_from_file <- function() {
+load_glove_from_file <- function(oversampling) {
   train_full <- read_csv('data/train_glove.csv')
   train_X <- train_full[, 1:ncol(train_full)-1]
-  train_y <- train_full[, ncol(train_full)]
-  train_oversampled <- oversample(train_X, train_y)
-  train_X <- train_oversampled[[1]]
-  train_y <- train_oversampled[[2]]
+  train_y <- unlist(train_full[, ncol(train_full)])
+  if (oversampling) {
+    train_oversampled <- oversample(train_X, train_y)
+    train_X <- train_oversampled[[1]]
+    train_y <- train_oversampled[[2]]
+  }
 
   test_full <- read_csv('data/test_glove.csv')
   test_X <- test_full[, 1:ncol(test_full)-1]
-  test_y <- test_full[, ncol(test_full)]
-  test_oversampled <- oversample(test_X, test_y)
-  test_X <- test_oversampled[[1]]
-  test_y <- test_oversampled[[2]]
+  test_y <- unlist(test_full[, ncol(test_full)])
+  if (oversampling) {
+    test_oversampled <- oversample(test_X, test_y)
+    test_X <- test_oversampled[[1]]
+    test_y <- test_oversampled[[2]]
+  }
 
   return (list(as.matrix(train_X), as.vector(train_y), as.matrix(test_X), as.vector(test_y)))
 }
@@ -152,9 +164,9 @@ oversample <- function (X, y) {
   return(list(result[, 1:ncol(result)-1], result[,ncol(result)]))
 }
 
-load_glove <- function () {
+load_glove <- function (oversampling = TRUE) {
   if (file.exists("data/train_glove.csv") && file.exists("data/test_glove.csv")) {
-    return (load_glove_from_file())
+    return (load_glove_from_file(oversampling))
   }
-  return (load_glove_raw(split = 0.8, save = TRUE, dims = 50))
+  return (load_glove_raw(split = 0.8, save = TRUE, dims = 50, oversampling = oversampling))
 }
