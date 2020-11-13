@@ -10,15 +10,17 @@ train_y <- as.vector(sets_list[[2]])
 test_X <- as.matrix(sets_list[[3]])
 test_y <- as.vector(sets_list[[4]])
 
-train <- data.frame(cbind(train_X, train_y))
-test <- data.frame(cbind(test_X, test_y))
+train <- data.frame(cbind(train_y, train_X))
+names(train) <- c('sentiment', paste('v', 1:ncol(train_X), sep = '_'))
+test <- data.frame(cbind(test_y, test_X))
+names(test) <- c('sentiment', paste('v', 1:ncol(test_X), sep = '_'))
 
 tree_classifier <- rpart(
-  train_y ~ .,
+  sentiment ~ .,
   data = train,
   method = 'class',
   parms = list(split = 'information'), # to be chosen gini vs information
-  maxdepth = 10 # to be found
+  maxdepth = 30 # to be found
 )
 
 pruned <- prune(
@@ -27,7 +29,7 @@ pruned <- prune(
 )
 
 
-preds <- predict(pruned, subset(test, select=-test_y))
+preds <- predict(tree_classifier, test)
 preds <- apply(preds, 1, function (x) {
   if (x[[1]] > x[[2]]) 1 - x[[1]] else x[[2]]
 })
