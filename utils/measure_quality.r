@@ -13,7 +13,7 @@ measure_quality <- function(y_predictions, y_true, threshold=0.5) {
   preds_factor <- factor(ifelse(y_predictions >= threshold, 1, 0))
   test_y_factor <- factor(y_true)
 
-  plot.roc(test_y, y_predictions, print.auc = TRUE, print.auc.x = 0.15, print.auc.y = 0.05)
+  plot.roc(y_true, y_predictions, print.auc = TRUE, print.auc.x = 0.15, print.auc.y = 0.05)
   print(confusionMatrix(data = preds_factor, reference = test_y_factor, positive = "1"))
   precision <- posPredValue(preds_factor, test_y_factor, positive="1")
   recall <- sensitivity(preds_factor, test_y_factor, positive="1")
