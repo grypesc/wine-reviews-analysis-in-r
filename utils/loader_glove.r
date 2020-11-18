@@ -81,7 +81,7 @@ embed_df <- function (df, glove, dims) {
   return(data.frame(emb))
 }
 
-load_glove_raw <- function (oversampling, split=0.8, save=FALSE, dims=50) {
+load_glove_raw <- function (oversampling, split=0.8, save=FALSE, dims=200) {
   # dims - glove dataset dimensions 50/100/200/300
   # Returns train_X, train_y, test_X, test_y in a list
   wine <- load_wines()
@@ -168,5 +168,5 @@ load_glove <- function (oversampling = TRUE) {
   if (file.exists("data/train_glove.csv") && file.exists("data/test_glove.csv")) {
     return (load_glove_from_file(oversampling))
   }
-  return (load_glove_raw(split = 0.8, save = TRUE, dims = 50, oversampling = oversampling))
+  return (load_glove_raw(split = 0.8, save = TRUE, dims = 200, oversampling = oversampling))
 }
