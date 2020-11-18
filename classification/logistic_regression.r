@@ -1,6 +1,7 @@
 library(glmnet)
 
 source("utils/loader_tfidf.r")
+source("utils/loader_glove.r")
 source("utils/measure_quality.r")
 
 sets_list <- load_tfidf()
@@ -19,7 +20,7 @@ glmnet_classifier <- cv.glmnet(x = train_X, y = train_y,
                                # L1 penalty
                                alpha = 1,
                                #custom weights to counter class imbalance
-                               weights = train_y*0.5 + 1,
+                               #weights = train_y,
                                # interested in the area under ROC curve
                                type.measure = "auc",
                                # 5-fold cross-validation
@@ -31,5 +32,9 @@ glmnet_classifier <- cv.glmnet(x = train_X, y = train_y,
 print(difftime(Sys.time(), t1, units = 'sec'))
 plot(glmnet_classifier)
 
-predictions <- predict(glmnet_classifier, test_X, type = 'response')[, 1]
-measure_quality(predictions, test_y, threshold = 0.50)
+print("############################## TRAIN ##############################")
+train_preds <- predict(glmnet_classifier, train_X, type = 'response')[, 1]
+measure_quality(train_preds, train_y)
+print("############################## TEST ##############################")
+test_preds <- predict(glmnet_classifier, test_X, type = 'response')[, 1]
+measure_quality(test_preds, test_y)

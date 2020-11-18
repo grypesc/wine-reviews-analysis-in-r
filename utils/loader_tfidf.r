@@ -2,7 +2,6 @@
 # Objective : Preprocess data and return train and test sets
 # Created by: greg
 # Created on: 10.11.2020
-# TODO Paths, oversampling
 
 library(text2vec)
 library(data.table)
