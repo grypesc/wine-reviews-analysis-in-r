@@ -7,6 +7,8 @@ library(text2vec)
 library(data.table)
 library(readr)
 library(Matrix)
+library(textstem)
+library(stopwords)
 
 load_tfidf <- function () {
   if (file.exists("data/train_tfidf.mm") && file.exists("data/test_tfidf.mm")) {
@@ -36,16 +38,19 @@ load_tfidf_raw <- function(split=0.8, save=FALSE) {
 
   # define preprocessing function and tokenization function
   prep_fun <- tolower
-  tok_fun <- word_tokenizer
+
+   stem_tokenizer <- function(x) {
+   lapply(word_tokenizer(x), SnowballC::wordStem, language="en")
+ }
+
 
   it_train <- itoken(train$description,
                      preprocessor = prep_fun,
-                     tokenizer = tok_fun,
+                     tokenizer = stem_tokenizer,
                      ids = train$X1,
                      progressbar = FALSE)
 
-  stop_words <- readLines("utils/eng_stop_words.txt")
-  vocab <- create_vocabulary(it_train, stopwords = stop_words)
+  vocab <- create_vocabulary(it_train, stopwords = stopwords("en"))
   pruned_vocab <- prune_vocabulary(vocab,
                                    term_count_min = 10,
                                    doc_proportion_max = 0.5,
@@ -61,9 +66,8 @@ load_tfidf_raw <- function(split=0.8, save=FALSE) {
   # apply pre-trained tf-idf transformation to test data
   it_test <- itoken(test$description,
                     preprocessor = prep_fun,
-                    tokenizer = tok_fun,
+                    tokenizer = stem_tokenizer,
                     ids = test$X1,
-                    # turn off progressbar because it won't look nice in rmd
                     progressbar = FALSE)
   dtm_test_tfidf <- create_dtm(it_test, vectorizer)
   dtm_test_tfidf <- transform(dtm_test_tfidf, tfidf)
