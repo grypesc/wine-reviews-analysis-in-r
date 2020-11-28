@@ -20,7 +20,8 @@ glmnet_classifier <- cv.glmnet(x = train_X, y = train_y,
                                # L1 penalty
                                alpha = 1,
                                #custom weights to counter class imbalance
-                               #weights = train_y,
+                               #weights = train_y*(1-class_ratio) + class_ratio,
+                               weights = train_y*(class_ratio - 1) + 1,
                                # interested in the area under ROC curve
                                type.measure = "auc",
                                # 5-fold cross-validation
@@ -35,6 +36,7 @@ plot(glmnet_classifier)
 print("############################## TRAIN ##############################")
 train_preds <- predict(glmnet_classifier, train_X, type = 'response')[, 1]
 measure_quality(train_preds, train_y)
+
 print("############################## TEST ##############################")
 test_preds <- predict(glmnet_classifier, test_X, type = 'response')[, 1]
 measure_quality(test_preds, test_y)
