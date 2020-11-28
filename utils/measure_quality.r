@@ -18,8 +18,8 @@ measure_quality <- function(y_predictions, y_true, threshold=0.5) {
   precision <- posPredValue(preds_factor, test_y_factor, positive="1")
   recall <- sensitivity(preds_factor, test_y_factor, positive="1")
   F1 <- (2 * precision * recall) / (precision + recall)
-  print(paste("test precision =", round(precision, 4)))
-  print(paste("test recall =", round(recall, 4)))
-  print(paste("test  F1 =", round(F1, 4)))
+  print(paste("Precision =", round(precision, 4)))
+  print(paste("Recall =", round(recall, 4)))
+  print(paste("F1 =", round(F1, 4)))
 
 }
