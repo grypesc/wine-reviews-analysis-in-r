@@ -1,8 +1,0 @@
-Python virtualenv
-python3 -m venv venv
-
-R installation
-https://itsfoss.com/install-r-ubuntu/
-
-IRkernel installation
-https://irkernel.github.io/installation/#linux-panel

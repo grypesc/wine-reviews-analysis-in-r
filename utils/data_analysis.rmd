@@ -10,7 +10,7 @@ library(dplyr)
 library(knitr)
 library(rmarkdown)
 
-df <- read.csv('data/winemag-data-130k-v2.csv', header = TRUE)
+df <- read.csv('../data/winemag-data-130k-v2.csv', header = TRUE)
 head(df)
 ```
 <h2>Price vs Points</h2>

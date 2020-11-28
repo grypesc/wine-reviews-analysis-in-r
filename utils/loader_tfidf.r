@@ -45,7 +45,7 @@ load_tfidf_raw <- function(split=0.8, save=FALSE) {
                      ids = train$X1,
                      progressbar = FALSE)
 
-  stop_words <- readLines("utils/eng_stop_words.txt")
+  stop_words <- readLines("../data/eng_stop_words.txt")
   vocab <- create_vocabulary(it_train, stopwords = stop_words)
   pruned_vocab <- prune_vocabulary(vocab,
                                    term_count_min = 10,
