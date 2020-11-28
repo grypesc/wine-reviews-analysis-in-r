@@ -52,9 +52,8 @@ load_tfidf_raw <- function(split=0.8, save=FALSE) {
 
   vocab <- create_vocabulary(it_train, stopwords = stopwords("en"))
   pruned_vocab <- prune_vocabulary(vocab,
-                                   term_count_min = 10,
-                                   doc_proportion_max = 0.5,
-                                   doc_proportion_min = 0.001)
+                                   term_count_min = 50,
+                                   doc_proportion_max = 0.5)
   vectorizer <- vocab_vectorizer(pruned_vocab)
   # create document term matrix
   dtm_train <- create_dtm(it_train, vectorizer)
