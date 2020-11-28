@@ -4,7 +4,7 @@ source("utils/loader_tfidf.r")
 source("utils/loader_glove.r")
 source("utils/measure_quality.r")
 
-sets_list <- load_glove()
+sets_list <- load_glove(oversampling = FALSE)
 train_X <- as.matrix(sets_list[[1]])
 train_y <- as.vector(sets_list[[2]])
 test_X <- as.matrix(sets_list[[3]])
@@ -28,9 +28,16 @@ pruned <- prune(
   cp=10 # to be found
 )
 
-
-preds <- predict(tree_classifier, test)
-preds <- apply(preds, 1, function (x) {
+print("############################## TRAIN ##############################")
+train_preds <- predict(tree_classifier, train)
+train_preds <- apply(train_preds, 1, function (x) {
   if (x[[1]] > x[[2]]) 1 - x[[1]] else x[[2]]
 })
-measure_quality(preds, test_y)
+measure_quality(train_preds, train_y)
+
+print("############################## TEST ###############################")
+test_preds <- predict(tree_classifier, test)
+test_preds <- apply(test_preds, 1, function (x) {
+  if (x[[1]] > x[[2]]) 1 - x[[1]] else x[[2]]
+})
+measure_quality(test_preds, test_y)
