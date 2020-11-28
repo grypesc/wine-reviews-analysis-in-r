@@ -1,5 +1,3 @@
-# Title     : TODO
-# Objective : TODO
 # Created by: greg
 # Created on: 11.11.2020
 
@@ -25,6 +23,7 @@ bst <- xgboost(data = as.matrix(train_X), label = train_y, objective = "binary:l
 print("############################## TRAIN ##############################")
 train_preds <- predict(bst, as.matrix(train_X))
 measure_quality(train_preds, train_y)
+
 print("############################## TEST ##############################")
 test_preds <- predict(bst, as.matrix(test_X))
 measure_quality(test_preds, test_y)
