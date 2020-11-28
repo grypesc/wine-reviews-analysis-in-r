@@ -23,13 +23,16 @@ train_n_positive <- sum(train_y == 1)
 train_n_negative <- sum(train_y == 0)
 
 svm_classifier <- svm(
-  train_X,
-  as.factor(train_y),
+  train_X[1:5000, ],
+  as.factor(train_y[1:5000]),
   type = 'C-classification',
   kernel = 'radial',
+  degree = 2,
   probability = TRUE,
   cost=1,
-  gamma = 1/ncol(train_X)
+  gamma = 1/ncol(train_X),
+  tolerance = 0.1,
+  cachesize = 8192,
 )
 
 print("############################## TRAIN ##############################")
@@ -38,6 +41,13 @@ train_preds <- apply(attr(train_preds, "probabilities"), 1, function (x) {
   if (x[[1]] > x[[2]]) 1 - x[[1]] else x[[2]]
 })
 measure_quality(as.numeric(as.character(train_preds)), train_y)
+
+print("############################## VALID ##############################")
+valid_preds <- predict(svm_classifier, valid_X, probability = TRUE)
+valid_preds <- apply(attr(valid_preds, "probabilities"), 1, function (x) {
+  if (x[[1]] > x[[2]]) 1 - x[[1]] else x[[2]]
+})
+measure_quality(as.numeric(as.character(valid_preds)), valid_y)
 
 print("############################## TEST ###############################")
 test_preds <- predict(svm_classifier, valid_X, probability = TRUE)
