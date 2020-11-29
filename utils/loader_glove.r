@@ -164,7 +164,7 @@ oversample <- function (X, y) {
   return(list(result[, 1:ncol(result)-1], result[,ncol(result)]))
 }
 
-load_glove <- function (oversampling = TRUE) {
+load_glove <- function (oversampling = FALSE) {
   if (file.exists("data/train_glove.csv") && file.exists("data/test_glove.csv")) {
     return (load_glove_from_file(oversampling))
   }
