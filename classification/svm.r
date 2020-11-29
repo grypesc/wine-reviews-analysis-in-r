@@ -5,7 +5,6 @@ source("utils/loader_glove.r")
 source("utils/measure_quality.r")
 
 sets_list <- load_glove(oversampling = FALSE)
-#sets_list <- if (is.null(sets_list)) load_glove(oversampling = FALSE) else sets_list
 train_X <- sets_list[[1]]
 train_X <- train_X[1:as.integer(0.8*nrow(train_X)), ]
 train_y <- sets_list[[2]]
@@ -24,31 +23,29 @@ svm_classifier <- svm(
   as.factor(train_y),
   type = 'C-classification',
   kernel = 'radial',
-  degree = 2,
   probability = TRUE,
   cost=1,
   gamma = 1/ncol(train_X),
-  tolerance = 0.1,
   cachesize = 8192,
 )
 
 print("############################## TRAIN ##############################")
 train_preds <- predict(svm_classifier, train_X, probability = TRUE)
-train_preds <- apply(attr(train_preds, "probabilities"), 1, function (x) {
+train_preds_probs <- apply(attr(train_preds, "probabilities"), 1, function (x) {
   if (x[[1]] > x[[2]]) 1 - x[[1]] else x[[2]]
 })
-measure_quality(as.numeric(as.character(train_preds)), train_y)
+measure_quality(as.numeric(as.character(train_preds_probs)), train_y)
 
 print("############################## VALID ##############################")
 valid_preds <- predict(svm_classifier, valid_X, probability = TRUE)
-valid_preds <- apply(attr(valid_preds, "probabilities"), 1, function (x) {
+valid_preds_probs <- apply(attr(valid_preds, "probabilities"), 1, function (x) {
   if (x[[1]] > x[[2]]) 1 - x[[1]] else x[[2]]
 })
-measure_quality(as.numeric(as.character(valid_preds)), valid_y)
+measure_quality(as.numeric(as.character(valid_preds_probs)), valid_y)
 
 print("############################## TEST ###############################")
-test_preds <- predict(svm_classifier, valid_X, probability = TRUE)
-test_preds <- apply(attr(test_preds, "probabilities"), 1, function (x) {
+test_preds <- predict(svm_classifier, test_X, probability = TRUE)
+test_preds_probs <- apply(attr(test_preds, "probabilities"), 1, function (x) {
   if (x[[1]] > x[[2]]) 1 - x[[1]] else x[[2]]
 })
-measure_quality(as.numeric(as.character(test_preds)), valid_y)
+measure_quality(as.numeric(as.character(test_preds_probs)), test_y)
