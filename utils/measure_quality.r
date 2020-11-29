@@ -4,16 +4,20 @@
 # Created on: 11.11.2020
 
 library(caret)
-library(pROC)
+library(plotROC)
+
 
 measure_quality <- function(y_predictions, y_true, threshold=0.5) {
-  # Generate ROC with AUC on plot, print metrics to console
+  # Generate ROC, print metrics to console
   # threshold - threshold above which qualify to class "1"
 
   preds_factor <- factor(ifelse(y_predictions >= threshold, 1, 0))
   test_y_factor <- factor(y_true)
 
-  plot.roc(y_true, y_predictions, print.auc = TRUE, print.auc.x = 0.15, print.auc.y = 0.05)
+  roc.estimate <- calculate_roc(y_predictions, y_true)
+  single.rocplot <- ggroc(roc.estimate)
+  style_roc(single.rocplot)
+
   print(confusionMatrix(data = preds_factor, reference = test_y_factor, positive = "1"))
   precision <- posPredValue(preds_factor, test_y_factor, positive="1")
   recall <- sensitivity(preds_factor, test_y_factor, positive="1")
@@ -21,5 +25,6 @@ measure_quality <- function(y_predictions, y_true, threshold=0.5) {
   print(paste("Precision =", round(precision, 4)))
   print(paste("Recall =", round(recall, 4)))
   print(paste("F1 =", round(F1, 4)))
-
+  print(paste("AUC =", (-1)*round(calc_auc(single.rocplot)$AUC, 4)))
+  return (single.rocplot)
 }
