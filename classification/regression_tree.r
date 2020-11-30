@@ -1,3 +1,7 @@
+# Objective : Training and evaluating regression tree models
+# Created by: matkob
+# Created on: 15.11.2020
+
 library(rpart)
 
 source("utils/loader_tfidf.r")
@@ -10,6 +14,7 @@ train_X <- train_X[1:as.integer(0.8*nrow(train_X)), ]
 train_y <- sets_list[[2]]
 train_y <- train_y[1:as.integer(0.8*length(train_y))]
 
+# reducing dimensionality with PCA
 pca1 <- prcomp(train_X, scale. = FALSE)
 train_X <- predict(pca1, train_X)
 train_X <- train_X[, 1:30]
@@ -35,6 +40,7 @@ names(valid) <- c(paste('v', 1:ncol(valid_X), sep = '_'), 'sentiment')
 test <- data.frame(cbind(test_y, test_X))
 names(test) <- c(paste('v', 1:ncol(test_X), sep = '_'), 'sentiment')
 
+# inverse weights to deal with sentiment disproportion
 positiveWeight <- nrow(train) / sum(train$sentiment == 1)
 negativeWeight <-  nrow(train) / sum(train$sentiment == 0)
 modelWeights <- ifelse(train$sentiment== 1, positiveWeight, negativeWeight)
@@ -44,13 +50,16 @@ tree_classifier <- rpart(
   data = train,
   method = 'class',
   weights = modelWeights,
-  parms = list(split = 'gini'), # to be chosen gini vs information
+  # splitting method: gini vs information
+  parms = list(split = 'gini'),
+  # pruning parameter (to be tuned) and max tree height
   control = rpart.control(cp = 0.0005, maxdepth = 30)
 )
 
 print("############################## TRAIN ##############################")
 train_preds <- predict(tree_classifier, train)
 train_preds_probs <- apply(train_preds, 1, function (x) {
+  # model output is prob(0), prob(1), selecting just the probability of 1
   if (x[[1]] > x[[2]]) 1 - x[[1]] else x[[2]]
 })
 measure_quality(train_preds_probs, train_y)

@@ -1,3 +1,7 @@
+# Objective : Training and evaluating SVM models
+# Created by: matkob
+# Created on: 15.11.2020
+
 library(e1071)
 
 source("utils/loader_tfidf.r")
@@ -22,16 +26,22 @@ svm_classifier <- svm(
   train_X,
   as.factor(train_y),
   type = 'C-classification',
+  # testing just radial kernel because of SVM's high complexity
   kernel = 'radial',
+  # return probabilities of classes
   probability = TRUE,
+  # cost of breaking the margin, to be tuned
   cost=1,
+  # relevance of distant samples, to be tuned
   gamma = 1/ncol(train_X),
+  # just a speed tweak
   cachesize = 8192,
 )
 
 print("############################## TRAIN ##############################")
 train_preds <- predict(svm_classifier, train_X, probability = TRUE)
 train_preds_probs <- apply(attr(train_preds, "probabilities"), 1, function (x) {
+  # model output is prob(0), prob(1), selecting just the probability of 1
   if (x[[1]] > x[[2]]) 1 - x[[1]] else x[[2]]
 })
 measure_quality(as.numeric(as.character(train_preds_probs)), train_y)

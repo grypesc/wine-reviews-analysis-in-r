@@ -1,6 +1,7 @@
-# Created by: mati
-# Created on: 08.11.2020
-# Glove pretrained model: http://nlp.stanford.edu/data/glove.6B.zip
+# Objective : Create/Load dataset with text vectorization using Glove
+# Created by: matkob
+# Created on: 15.11.2020
+# Link to pretrained glove model: http://nlp.stanford.edu/data/glove.6B.zip
 
 library(dplyr)
 library(data.table)
@@ -10,6 +11,8 @@ library(pbapply)
 library(hash)
 
 load_wines <- function () {
+  # loads raw data
+  # performs points discretization
   wine <- read_csv('data/winemag-data_first150k.csv')
   wine <- subset(wine, select = c(X1, points, price, description))
   wine$sentiment <- ifelse(wine$points>90, 1, 0)
@@ -19,6 +22,7 @@ load_wines <- function () {
 }
 
 load_glove_model <- function (dims) {
+  # loads pretrained glove model as a dictionary of word -> embedding
   # dims - glove dataset dimensions 50/100/200/300
   file <- sprintf('data/glove.6B.%dd.txt', dims)
   if (!file.exists(file)) {
@@ -39,6 +43,8 @@ load_glove_model <- function (dims) {
 }
 
 clean_description <- function (df) {
+  # performs simple text cleaning on reviews' descriptions
+  # df - data frame of reviews with a description column
   text <- df$description
   text <- tolower(text)
   # mentions
@@ -61,7 +67,11 @@ clean_description <- function (df) {
 }
 
 embed_doc <- function (doc, glove, dims) {
-  # find glove repr
+  # performs text (review) embedding with glove
+  # embeds every word and then calculates mean for each matrix column
+  # doc - text to be embedded
+  # glove - dictionary of word -> embedding
+  # dims - number of dimensions of glove embeddings
   vec <- unlist(strsplit(doc, ' '))
   embeded <- sapply(vec, function (x) {
       if (has.key(x, glove))
@@ -73,6 +83,10 @@ embed_doc <- function (doc, glove, dims) {
 }
 
 embed_df <- function (df, glove, dims) {
+  # embeds data frame of reviews
+  # df - data frame with description column to be embedded
+  # glove - dictionary of word -> embedding
+  # dims - number of dimensions of glove embeddings
   print("cleaning documents")
   emb <- clean_description(df)
   print("embedding documents")
@@ -82,8 +96,12 @@ embed_df <- function (df, glove, dims) {
 }
 
 load_glove_raw <- function (oversampling, split=0.8, save=FALSE, dims=200) {
+  # loads or creates and saves training and testing set
+  # returns list of train_X, train_y, test_X, test_y
+  # oversampling - boolean, enables oversampling
+  # split - proportions of training to testing dataset
+  # save - whether to save loaded/created model
   # dims - glove dataset dimensions 50/100/200/300
-  # Returns train_X, train_y, test_X, test_y in a list
   wine <- load_wines()
   glove <- load_glove_model(dims)
 
@@ -98,7 +116,7 @@ load_glove_raw <- function (oversampling, split=0.8, save=FALSE, dims=200) {
   dtm_test_glove <- embed_df(test, glove, dims)
 
   if (save) {
-    # as data frames
+    # save as data frames
     train_full <- cbind(dtm_train_glove, train$sentiment)
     test_full <- cbind(dtm_test_glove, test$sentiment)
     write_csv(train_full, 'data/train_glove.csv')
@@ -122,6 +140,8 @@ load_glove_raw <- function (oversampling, split=0.8, save=FALSE, dims=200) {
 }
 
 load_glove_from_file <- function(oversampling) {
+  # loads vectorized dataset from files
+  # oversampling - boolean, enables oversampling
   train_full <- read_csv('data/train_glove.csv')
   train_X <- train_full[, 1:ncol(train_full)-1]
   train_y <- unlist(train_full[, ncol(train_full)])
@@ -144,6 +164,9 @@ load_glove_from_file <- function(oversampling) {
 }
 
 oversample <- function (X, y) {
+  # performs oversampling, ensures equal sample counts
+  # X - input matrix
+  # y - output vector
   full <- cbind(X, y)
   c0 <- sum(full[ncol(full)] == 0)
   c1 <- sum(full[ncol(full)] == 1)
@@ -165,6 +188,9 @@ oversample <- function (X, y) {
 }
 
 load_glove <- function (oversampling = FALSE) {
+  # main loader
+  # decides whether to load or create and save vectorized dataset
+  # oversampling - boolean, enables oversampling
   if (file.exists("data/train_glove.csv") && file.exists("data/test_glove.csv")) {
     return (load_glove_from_file(oversampling))
   }

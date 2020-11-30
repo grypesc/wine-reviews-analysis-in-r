@@ -1,11 +1,13 @@
 ---
-title: "Data"
-author: mati
+title: "Data analysis"
+author: matkob
 date: 12.11.2020
 output: html_notebook
 ---
 
 ```{r message=FALSE}
+# uncomment for generating html file
+# setwd('..')
 library(dplyr)
 library(knitr)
 library(rmarkdown)
@@ -30,7 +32,7 @@ boxplot(remove_outliers(df, 'price')$price, horizontal=TRUE)
 ```
 <h2>Price vs Points 2</h2>
 ```{r}
-price_qnt = remove_outliers(df, 'price')
+price_qnt <- remove_outliers(df, 'price')
 plot(x=price_qnt$price, xlab='price', y=price_qnt$points, ylab='points')
 ```
 <h2>Points</h2>
@@ -41,13 +43,14 @@ hist(
     df$points,
     breaks=c(80,90,100),
     col=c('#74b9ff', '#e17055'),
-    xlab='przyznane punkty',
-    ylab='liczba recenzji',
-    main='Rozkład punktacji'
+    xlab='points',
+    main='Points distribution'
 )
 ```
-<h2>Glove</h2>
+<h2>Glove Values</h2>
 ```{r}
+source("utils/loader_glove.r")
+# loading glove dataset
 vectors <- load_glove(oversampling = FALSE)
 ```
 ```{r}
@@ -56,15 +59,14 @@ hist(
   breaks = c(0, 0.1, 0.2, 0.3),
   col=c('#74b9ff', '#e17055', '#fdcb6e'),
   cex.lab=2,
-  xlab='odchylenie standardowe',
-  ylab='liczność',
-  main='Rozkład odchylenia standardowego'
+  xlab='std dev',
+  main='Std dev distribution'
 )
 ```
+<h2>Words occurrence</h2>
 ```{r}
 library(SnowballC)
 library(tidytext)
-library(dplyr)
 
 data('stop_words')
 descr <- df$description
@@ -83,11 +85,14 @@ descr <- gsub('^\\s+', '', descr)
 descr <- gsub('\\s+$', '', descr)
 descr <- gsub('[ |\t]+', ' ', descr)
 df['text'] <- descr
+# sentences to words
 text_data <- mutate(df, text = as.character(text)) %>%
     select(text) %>%
     unnest_tokens("word", text)
+# removing stopwords
 text_data <- data.frame(text_data$word[!(text_data$word %in% stop_words$word)])
 names(text_data) <- 'word'
+# counting occurrence
 common <- text_data %>% count(word) %>% arrange(desc(n))
 head(common, 10)
 ```
