@@ -1,5 +1,8 @@
-library(glmnet)
+# Objective : Training and evaluating logistic regression models
+# Created by: greg
+# Created on: 15.11.2020
 
+library(glmnet)
 source("utils/loader_tfidf.r")
 source("utils/loader_glove.r")
 source("utils/measure_quality.r")

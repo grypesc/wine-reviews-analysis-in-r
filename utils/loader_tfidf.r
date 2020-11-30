@@ -1,5 +1,5 @@
 # Title     : loader_tfidf
-# Objective : Preprocess data and return train and test sets
+# Objective : Preprocess data and return train and test tfidf sets
 # Created by: greg
 # Created on: 10.11.2020
 
@@ -11,6 +11,8 @@ library(textstem)
 library(stopwords)
 
 load_tfidf <- function () {
+  # Returns tfidf train and test sets, loads them from file if available, otherwise will
+  # create new ones
   if (file.exists("data/train_tfidf.mm") && file.exists("data/test_tfidf.mm")) {
     return (load_tfidf_from_file())
   }
@@ -88,6 +90,7 @@ load_tfidf_raw <- function(split=0.8, save=FALSE) {
 }
 
 load_tfidf_from_file <- function() {
+  # Loads and returns tfidf trains and test sets from files
   train_full <- readMM('data/train_tfidf.mm')
   train_X <- train_full[, 1:ncol(train_full)-1]
   train_y <- train_full[, ncol(train_full)]
@@ -101,6 +104,7 @@ load_tfidf_from_file <- function() {
 }
 
 oversample <- function (X, y) {
+  # Oversample smaller class samples until there are as many as the bigger class
   full <- cbind(X, y)
   c0 <- nrow(full[full[,ncol(full)] == 0,])
   c1 <- nrow(full[full[,ncol(full)] == 1,])
