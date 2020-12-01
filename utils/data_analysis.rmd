@@ -56,7 +56,7 @@ vectors <- load_glove(oversampling = FALSE)
 ```{r}
 hist(
   apply(vectors[[1]], 2, sd),
-  breaks = c(0, 0.1, 0.2, 0.3),
+  breaks = 100,
   col=c('#74b9ff', '#e17055', '#fdcb6e'),
   cex.lab=2,
   xlab='std dev',
@@ -95,4 +95,52 @@ names(text_data) <- 'word'
 # counting occurrence
 common <- text_data %>% count(word) %>% arrange(desc(n))
 head(common, 10)
+```
+
+
+```{r}
+    library(wordcloud)
+    library(RColorBrewer)
+    library(text2vec)
+    wine <- read_csv('data/winemag-data_first150k.csv')
+    wine <- subset(wine, select = c(X1, points, price, description))
+    wine$sentiment <- ifelse(wine$points>90, 1, 0)
+
+    setDT(wine)
+    setkey(wine, X1)
+
+    all_ids <- wine$X1
+    sample_size <- floor(0.8 * nrow(wine))
+    train_ids <- sample(all_ids, sample_size)
+    test_ids <- setdiff(all_ids, train_ids)
+    train <- wine[J(train_ids)]
+    test <- wine[J(test_ids)]
+
+    # define preprocessing function and tokenization function
+    prep_fun <- tolower
+
+    stem_tokenizer <- function(x) {
+    lapply(word_tokenizer(x), SnowballC::wordStem, language="en")
+    }
+
+
+    it_train <- itoken(train$description,
+                     preprocessor = prep_fun,
+                     tokenizer = stem_tokenizer,
+                     ids = train$X1,
+                     progressbar = FALSE)
+
+    vocab <- create_vocabulary(it_train, stopwords = stopwords("en"))
+    pruned_vocab <- prune_vocabulary(vocab,
+                                   term_count_min = 50,
+                                   doc_proportion_max = 0.5)
+
+    vectorizer <- vocab_vectorizer(pruned_vocab)
+    # create document term matrix
+
+    wordcloud(words = pruned_vocab$term, freq = pruned_vocab$doc_count, min.freq = 1,
+              max.words=200, random.order=FALSE, rot.per=0.35,
+            colors=brewer.pal(8, "Dark2"))
+
+
 ```
